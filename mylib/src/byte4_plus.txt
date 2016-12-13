@@ -1,0 +1,99 @@
+The problem that we're now solving is to construct an implementation of a
+function, byte4_sum, that takes two 4-bit bytes and returns a 4-bit byte
+representing the sum while simply discarding any high-order overflow bit.
+
+With the addition of natural numbers and the concept of recursive functions
+to our toolkit (through the nat module), We're now in a position to take on
+this problem.
+
+Our overall strategy for constructing a satisfactory implementation will be
+top-down functional decomposition, realized by systematically introducing,
+and then constructing code to fill, holes in Idris code.
+
+We already have our implementation of the top-level byte4_plus function.
+We're done at that level. Here's the function implementation.
+
+========
+
+||| addition
+export
+byte4_plus': Byte4 -> Byte4 -> Byte4
+byte4_plus' b0 b1 =
+  byte4_new
+    (sum_sub nat_three b1 b0)
+    (sum_sub nat_two   b1 b0)
+    (sum_sub nat_one   b1 b0)
+    (sum_sub nat_zero  b1 b0)
+
+========
+
+This function implementation uses a lower-level function called sum_sub.
+The sum_sub function takes an index (a natural number) and two 4-bit bytes
+and that returns the indexed bits in the two given bytes. If the index is
+too large for the number of bits in the bytes, the function will return B0.
+That's it!
+
+We make the code compile by declaring the type of sum_sub and by binding
+it to a hole that we will then have to refine into working code. The key
+when we introduce the hole is that we understand precisely what that code
+will eventually have to do. In the case of sum_sub, for example, it must
+take an index and two bytes and return the index-designated bit in the sum
+of the two bytes.
+
+Now we just recurse! That is, we apply the same strategy at 'the next level
+down." To be clear, we need an implementation of sum_sub, and we can use the
+same tricks in constructing it. It's jobs is pretty simple if you look at the
+diagram of byte addition: the job of sum_sub is to add the three bits in one
+column of a byte addition problem: the carry value from the previous column
+and the two bits in the present column. That's it.
+
+So now we write the code; and once again we write it to clearly express the
+essence of the problem we're solving, introducing yet lower-level functions
+as might be required to achieve our aim of clarity, precision, elegance and
+of course logical and mathematical correctness.
+
+Following next is the code, including the use of two functions that we have
+yet to implement. The first is carry_sub. The second is byte4_sub.
+
+The carry_sub function takes an index n and two bytes and returns the carry
+bit in the indexed column. The byte4_sub function takes an index and a bytes
+and returns the indexed bit of the given byte. If indices are too big, these
+functions return the zero bit (B0).
+
+========
+
+-- compute the indexed bit of the sum of the given bytes
+sum_sub: Nat -> Byte4 -> Byte4 -> Bit
+sum_sub n b1 b0 =
+  bit_plus3
+    (carry_sub n b1 b0)
+    (byte4_sub n b1)
+    (byte4_sub n b0)
+
+========
+
+It's important to grasp that when applying the method of top-down functional
+decomposition, can simply assume that we have the lower-level functions that
+we need ("wish we had") to make our code easy to write and understand. We go
+back and fill in the hole later. In this way, we maintain clarity and control
+at each level of decomposition. Here's the stub code for our present problem.
+
+========
+
+||| Return the indexed bit of the given byte or B0 if the index is out of range
+export
+byte4_sub: Nat -> Byte4 -> Bit
+byte4_sub n b4 = ?byte4_sub_hole
+-- this function is stubbed out; the hole must be filled!
+
+
+||| Return the carry bit in the indexed column when adding the two bytes
+||| or the zero bit (B0) if the index is out of range
+carry_sub: Nat -> Byte4 -> Byte4 -> Bit
+carry_sub n b1 b0 = ?carry_sub_hole
+-- this function is stubbed out; the hole must be filled!
+
+========
+
+Now all we have to do is resolve the remaining holes. You can find working code
+as described here in my github repo, under tag v4.1
